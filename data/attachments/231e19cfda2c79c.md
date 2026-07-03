@@ -1,0 +1,77 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/auth/signup.spec.ts >> Signup >> registers a brand new user end-to-end @smoke
+- Location: tests/ui/auth/signup.spec.ts:5:3
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: locator('.signup-form h2').filter({ hasText: 'New User Signup!' })
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('.signup-form h2').filter({ hasText: 'New User Signup!' })
+
+```
+
+```yaml
+- text: Please wait while your request is being verified...
+```
+
+# Test source
+
+```ts
+  1  | import { test, expect } from '../../../src/fixtures/test-options';
+  2  | import { generateFakeUser } from '../../../src/utils/faker.util';
+  3  | 
+  4  | test.describe('Signup', () => {
+  5  |   test('registers a brand new user end-to-end @smoke', async ({
+  6  |     loginSignupPage,
+  7  |     signupInfoPage,
+  8  |     accountCreatedPage,
+  9  |     apiClient,
+  10 |   }) => {
+  11 |     const user = generateFakeUser();
+  12 | 
+  13 |     await loginSignupPage.open();
+> 14 |     await expect(loginSignupPage.signupTitle).toBeVisible();
+     |                                               ^ Error: expect(locator).toBeVisible() failed
+  15 |     await loginSignupPage.startSignup(user.name, user.email);
+  16 | 
+  17 |     await expect(signupInfoPage.accountInfoTitle).toBeVisible();
+  18 |     await signupInfoPage.fillAccountInformation(user);
+  19 |     await signupInfoPage.submit();
+  20 | 
+  21 |     await expect(accountCreatedPage.accountCreatedMessage).toBeVisible();
+  22 |     await accountCreatedPage.continueToHome();
+  23 | 
+  24 |     await expect(accountCreatedPage.header.loggedInAsText).toContainText(user.name);
+  25 | 
+  26 |     // cleanup via API so this test doesn't leak accounts
+  27 |     await apiClient.deleteAccount(user.email, user.password);
+  28 |   });
+  29 | 
+  30 |   test('rejects signup with an already-registered email @regression', async ({
+  31 |     loginSignupPage,
+  32 |     createdApiUser,
+  33 |   }) => {
+  34 |     await loginSignupPage.open();
+  35 |     await loginSignupPage.startSignup('Duplicate Attempt', createdApiUser.email);
+  36 | 
+  37 |     await expect(loginSignupPage.signupErrorMessage).toBeVisible();
+  38 |     await expect(loginSignupPage.signupErrorMessage).toHaveText('Email Address already exist!');
+  39 |   });
+  40 | });
+  41 | 
+```
